@@ -1,0 +1,29 @@
+# Managed-cloud TLS trust. Keep proxy defaults supplied by Docker.
+services:
+  api:
+    build:
+      context: ./backend
+      secrets: [ca_bundle]
+    volumes:
+      - ${SSL_CERT_FILE:-/etc/ssl/certs/ca-certificates.crt}:/run/cloud-ca.pem:ro
+    environment:
+      SSL_CERT_FILE: /run/cloud-ca.pem
+  migrate:
+    build:
+      context: ./backend
+      secrets: [ca_bundle]
+  worker:
+    build:
+      context: ./backend
+      secrets: [ca_bundle]
+  beat:
+    build:
+      context: ./backend
+      secrets: [ca_bundle]
+  frontend:
+    build:
+      context: ./frontend
+      secrets: [ca_bundle]
+secrets:
+  ca_bundle:
+    file: ${SSL_CERT_FILE:-/etc/ssl/certs/ca-certificates.crt}
