@@ -6,6 +6,16 @@ export type User = {
   email_verified: boolean;
   orcid_id: string | null;
 };
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
 export async function api<T>(
   path: string,
   body?: unknown,
@@ -32,7 +42,14 @@ export async function api<T>(
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   const result = await response.json();
-  if (!response.ok)
-    throw new Error(result.message ?? "No pudimos completar la solicitud");
+  if (!response.ok) {
+    if (response.status === 401 && path !== "/me" && path !== "/auth/login") {
+      window.dispatchEvent(new Event("session-expired"));
+    }
+    throw new ApiError(
+      result.message ?? "No pudimos completar la solicitud",
+      response.status,
+    );
+  }
   return result;
 }

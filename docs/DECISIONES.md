@@ -67,3 +67,19 @@ Se agregan APP_PORT y MAILPIT_PORT configurables, y `.env.pc.example` para los p
 3001/8026. El proyecto Compose `livesrl-codex` separa contenedores y volúmenes de otros
 proyectos del usuario. `.gitattributes` conserva LF en scripts para Docker sobre Windows.
 La comprobación de tipos genera primero los tipos de Next.js para funcionar en un clon nuevo.
+
+## Corrección del menú y diseño de F0
+
+- El encabezado ya no contiene un enlace fijo de acceso: consulta la sesión real mediante
+  un contexto compartido con el formulario y el espacio privado. El nombre de la cuenta
+  sustituye al enlace de acceso solo tras confirmar la identidad.
+- Entrar/salir actualiza inmediatamente ese contexto; navegar, recuperar foco y recibir
+  cambios de otra pestaña vuelven a validar contra `/me`. Un contador de solicitudes
+  impide que respuestas antiguas restauren el estado anterior a un cambio de sesión.
+- Un fallo de red tiene estado propio con reintento. Solo una respuesta 401 se trata
+  como sesión ausente; mientras se comprueba, no se muestra un acceso anónimo incorrecto.
+- Menú de cuenta accesible con cierre mediante Escape o clic exterior, navegación activa,
+  tema claro/oscuro persistente y controles adecuados a pantallas estrechas.
+- Se rediseñan acceso y espacio privado sin métricas ficticias: estado de correo verificado,
+  rol actual, un siguiente paso y aviso explícito de que la carga aún no está disponible.
+  No se inicia F1 ni se añaden funciones científicas en este cambio.

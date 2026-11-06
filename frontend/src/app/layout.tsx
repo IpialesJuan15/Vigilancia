@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { AuthProvider } from "@/components/auth-provider";
 import { Header } from "@/components/header";
 import "@fontsource/inter/latin-400.css";
 import "@fontsource/inter/latin-600.css";
@@ -19,8 +20,10 @@ export default function RootLayout({
         <a className="skip" href="#contenido">
           Ir al contenido
         </a>
-        <Header />
-        <main id="contenido">{children}</main>
+        <AuthProvider>
+          <Header />
+          <main id="contenido">{children}</main>
+        </AuthProvider>
         <footer>
           <strong>LiveSRL</strong>
           <span>La evidencia evoluciona. La atribución permanece.</span>
