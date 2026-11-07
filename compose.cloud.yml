@@ -1,5 +1,12 @@
 # Managed-cloud TLS trust. Keep proxy defaults supplied by Docker.
 services:
+  grobid:
+    environment:
+      JAVA_TOOL_OPTIONS: -XX:-UseContainerSupport -Xmx2g
+  minio:
+    build:
+      context: ./infrastructure/minio
+      secrets: [ca_bundle]
   api:
     build:
       context: ./backend

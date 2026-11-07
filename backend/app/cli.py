@@ -15,9 +15,11 @@ def main():
     parser.add_argument("role", choices=["admin", "curator", "subscriber"])
     args = parser.parse_args()
     with SessionLocal() as db:
-        user = db.scalar(select(User).where(User.email == args.email.lower()))
-        if not user or not user.email_verified:
-            parser.error("La cuenta debe existir y tener el correo verificado")
+        user = db.scalar(
+            select(User).where((User.email == args.email.lower()) | (User.orcid_id == args.email))
+        )
+        if not user or not (user.email_verified or user.orcid_id):
+            parser.error("La cuenta debe existir y tener correo verificado o acceso ORCID")
         audit(db, user, "operator_role_changed", {"role": user.role}, {"role": args.role})
         user.role = args.role
         user.session_version += 1

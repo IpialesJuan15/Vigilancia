@@ -2,7 +2,9 @@ from celery import Celery
 
 from app.config import get_settings
 
-celery = Celery("livesrl", broker=get_settings().redis_url, include=["app.tasks.mail"])
+celery = Celery(
+    "livesrl", broker=get_settings().redis_url, include=["app.tasks.mail", "app.tasks.ingest"]
+)
 celery.conf.update(
     task_serializer="json",
     accept_content=["json"],

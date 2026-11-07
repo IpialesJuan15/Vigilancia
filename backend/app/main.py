@@ -11,8 +11,10 @@ from sqlalchemy.orm import Session
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.routes.auth import router as auth_router
+from app.api.routes.reviews import router as reviews_router
 from app.config import get_settings
 from app.db import engine, get_db
+from app.middleware import BodyLimitMiddleware
 from app.models import User
 from app.schemas import RoleInput, UserOut
 from app.security import csrf_guard, current_user, rate_limit, require_roles
@@ -28,7 +30,9 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PATCH"],
     allow_headers=["Content-Type", "X-CSRF-Token"],
 )
+app.add_middleware(BodyLimitMiddleware, max_bytes=get_settings().max_pdf_bytes + 1024 * 1024)
 app.include_router(auth_router)
+app.include_router(reviews_router)
 logger = logging.getLogger("livesrl")
 
 
@@ -101,12 +105,6 @@ def health():
 @app.get("/me", response_model=UserOut)
 def me(user: User = Depends(current_user)):
     return user
-
-
-@app.get("/reviews")
-def my_reviews(user: User = Depends(current_user)):
-    # No invented studies; ingestion starts in F1.
-    return {"items": [], "total": 0, "ingestion_available": False}
 
 
 @app.get("/public/reviews")

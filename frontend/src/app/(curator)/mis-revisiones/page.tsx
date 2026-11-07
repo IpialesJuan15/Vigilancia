@@ -1,51 +1,46 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  ArrowRight,
-  BookOpen,
-  Check,
-  FileText,
-  FolderOpen,
-  ShieldCheck,
-  Quote,
-  Search,
-} from "lucide-react";
+import { ArrowRight, FileText, Plus, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
+import { api } from "@/lib/api";
+import { type Review, stateLabel } from "@/lib/reviews";
 import { Button } from "@/components/ui/button";
-
 export default function Workspace() {
   const { user, status, refresh } = useAuth();
   const router = useRouter();
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [error, setError] = useState("");
   useEffect(() => {
     if (status === "anonymous") router.replace("/login");
   }, [status, router]);
+  useEffect(() => {
+    if (!user) return;
+    let active = true;
+    api<{ items: Review[] }>("/reviews")
+      .then((x) => {
+        if (active) setReviews(x.items);
+      })
+      .catch(() => {
+        if (active)
+          setError(
+            "No pudimos cargar tus revisiones. Recarga la página para intentar de nuevo",
+          );
+      });
+    return () => {
+      active = false;
+    };
+  }, [user]);
   if (status === "error")
     return (
       <section className="card empty">
-        <ShieldCheck size={32} aria-hidden="true" />
         <h1 className="dashboard-title">No pudimos comprobar tu sesión</h1>
-        <p>Comprueba tu conexión e inténtalo de nuevo.</p>
         <Button onClick={() => void refresh()}>Intentar de nuevo</Button>
       </section>
     );
-  if (!user)
-    return (
-      <section
-        className="workspace-loading"
-        role="status"
-        aria-label="Preparando tu espacio"
-      >
-        <div className="skeleton" />
-        <p>Preparando tu espacio…</p>
-      </section>
-    );
-  const role = {
-    subscriber: "Suscriptor",
-    curator: "Curador",
-    admin: "Administrador",
-  }[user.role];
+  if (!user) return <p role="status">Preparando tu espacio…</p>;
+  const canCreate = user.role !== "subscriber";
   return (
     <div className="workspace">
       <div className="workspace-heading">
@@ -58,97 +53,94 @@ export default function Workspace() {
           </p>
         </div>
         <span className="role-badge">
-          <ShieldCheck size={15} aria-hidden="true" />
-          {role}
+          <ShieldCheck size={15} />
+          {
+            {
+              subscriber: "Suscriptor",
+              curator: "Curador",
+              admin: "Administrador",
+            }[user.role]
+          }
         </span>
       </div>
       <aside className="next-step workspace-next">
-        <div className="next-icon">
-          <Search size={23} aria-hidden="true" />
-        </div>
         <div>
           <span className="eyebrow">Siguiente paso</span>
-          <h2>Conoce el catálogo de revisiones</h2>
-          <p>Consulta las revisiones públicas cuando estén disponibles.</p>
+          <h2>
+            {canCreate
+              ? "Carga una revisión publicada"
+              : "Conoce el catálogo de revisiones"}
+          </h2>
+          <p>
+            {canCreate
+              ? "Comienza con su DOI. Puedes añadir el PDF del artículo."
+              : "Consulta las revisiones públicas cuando estén disponibles."}
+          </p>
         </div>
-        <Link className="button primary" href="/catalogo">
-          Explorar revisiones
-          <ArrowRight size={17} aria-hidden="true" />
+        <Link
+          className="button primary"
+          href={canCreate ? "/revisiones/nueva" : "/catalogo"}
+        >
+          {canCreate ? (
+            <>
+              <Plus size={17} />
+              Cargar revisión
+            </>
+          ) : (
+            <>
+              Explorar revisiones
+              <ArrowRight size={17} />
+            </>
+          )}
         </Link>
       </aside>
-      <div className="workspace-grid">
-        <section
-          className="card review-collection"
-          aria-labelledby="reviews-heading"
-        >
-          <div className="collection-heading">
-            <h2 id="reviews-heading">Tu biblioteca</h2>
-            <span className="collection-label">Revisiones que administras</span>
+      {error && (
+        <p role="alert" className="message error">
+          {error}
+        </p>
+      )}
+      <section className="card review-collection">
+        <div className="collection-heading">
+          <h2>Tu biblioteca</h2>
+          <span className="collection-label">Revisiones que administras</span>
+        </div>
+        {reviews.length ? (
+          <div className="review-list">
+            {reviews.map((review) => (
+              <article className="review-card" key={review.id}>
+                <span className="tag">
+                  {stateLabel[review.status] || review.stage}
+                </span>
+                <h2>
+                  <Link href={`/revisiones/${review.id}`}>
+                    {review.original_title}
+                  </Link>
+                </h2>
+                <p>
+                  {review.journal} {review.year ? `· ${review.year}` : ""}
+                </p>
+                <Link href={`/revisiones/${review.id}`}>Abrir revisión →</Link>
+              </article>
+            ))}
           </div>
+        ) : (
           <div className="empty workspace-empty">
-            <div className="empty-illustration" aria-hidden="true">
-              <span className="paper paper-back" />
-              <span className="paper paper-front">
-                <FileText size={35} />
-              </span>
-              <span className="folder-symbol">
-                <FolderOpen size={25} />
-              </span>
-            </div>
+            <FileText size={38} aria-hidden="true" />
             <h2>Aún no tienes revisiones</h2>
             <p>
-              Cuando administres una revisión, encontrarás aquí su evidencia,
-              sus novedades y el siguiente paso.
+              {canCreate
+                ? "Carga tu primer artículo para comprobar su licencia y leer su contenido."
+                : "Cuando administres una revisión, encontrarás aquí su evidencia, sus novedades y el siguiente paso."}
             </p>
-            <div className="availability-note">
-              <span className="availability-dot" aria-hidden="true" />
-              <span>La carga de artículos todavía no está disponible.</span>
-            </div>
+            {!canCreate && (
+              <div className="availability-note">
+                Tu perfil permite consultar revisiones. Un administrador puede
+                darte acceso como curador.
+              </div>
+            )}
           </div>
-        </section>
-        <aside className="workspace-sidebar">
-          <section className="card account-card">
-            <span className="eyebrow">Tu cuenta</span>
-            <div className="account-card-title">
-              <span className="account-check">
-                <Check size={20} aria-hidden="true" />
-              </span>
-              <h2>
-                {user.email_verified ? "Cuenta verificada" : "Cuenta conectada"}
-              </h2>
-            </div>
-            <p>Ya tienes acceso a tu espacio de investigación.</p>
-            <div className="account-fact">
-              <span>Acceso</span>
-              <strong>
-                {user.email_verified
-                  ? "Correo verificado"
-                  : "Conectado con ORCID"}
-              </strong>
-            </div>
-            <div className="account-fact">
-              <span>Perfil</span>
-              <strong>{role}</strong>
-            </div>
-          </section>
-          <section className="trust-note">
-            <BookOpen size={19} aria-hidden="true" />
-            <div>
-              <strong>La evidencia, siempre primero</strong>
-              <p>
-                Cada dato conservará su fuente. Cada actualización pasará por
-                revisión humana.
-              </p>
-            </div>
-          </section>
-        </aside>
-      </div>
-      <div className="workspace-footnote">
-        <Quote size={17} aria-hidden="true" />
-        <p>
-          El conocimiento avanza. El reconocimiento a sus autores permanece.
-        </p>
-      </div>
+        )}
+      </section>
       {user.role === "admin" && (
         <p>
           <Link href="/administracion">Administrar usuarios →</Link>

@@ -1,0 +1,9 @@
+services:
+  api:
+    environment:
+      STORAGE_BACKEND: local
+      STORAGE_DIR: /state/reviews
+  worker:
+    environment:
+      STORAGE_BACKEND: local
+      STORAGE_DIR: /state/reviews

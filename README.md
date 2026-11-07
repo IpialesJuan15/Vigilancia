@@ -3,10 +3,12 @@
 Plataforma web de revisiones sistemáticas de literatura vivas, en español y en modo prueba.
 Implementación por fases del [plan maestro](docs/PLAN_MAESTRO.md).
 
-**Estado: F0 (fundaciones).** Autenticación por correo, verificación, recuperación, sesiones,
-roles, conexión ORCID Sandbox, layout responsive, migraciones, cola de correo y CI.
-La ingesta, extracción, vigilancia y publicación científica corresponden a F1–F9 y todavía
-no están implementadas. No hay revisiones ni resultados científicos de ejemplo en la aplicación.
+**Estado: F0 validada por el usuario; F1 en desarrollo.** La rama de F1 añade carga privada
+por DOI/PDF, verificación OA/licencia y lectura del documento. La aceptación de F1 está
+pendiente de MinIO y tres revisiones reales por restricciones de red del entorno remoto.
+Consulta [Validación de F1](docs/VALIDACION_F1.md) antes de actualizar una instalación.
+La extracción científica con IA, vigilancia y publicación se implementan en fases posteriores.
+No hay artículos ni resultados de ejemplo en la aplicación.
 
 Para probar en Windows sin ocupar el puerto 3000 de otro proyecto, sigue
 [Probar en tu PC](docs/PRUEBA_EN_PC.md).
@@ -47,8 +49,9 @@ El rol de autor reclamado será una relación con la revisión en una fase poste
 
 La integración está implementada, pero requiere registrar una aplicación en ORCID Sandbox.
 Copia `.env.example` a `.env` sin sobrescribir un archivo existente; configura
-`ORCID_CLIENT_ID`, `ORCID_CLIENT_SECRET` y el callback exacto
-`http://localhost:3000/api/auth/orcid/callback`. Reinicia con `docker compose up -d`.
+`ORCID_CLIENT_ID`, `ORCID_CLIENT_SECRET`, `APP_BASE_URL=http://127.0.0.1:3000` y el callback exacto
+`http://127.0.0.1:3000/api/auth/orcid/callback`. Para el perfil de PC se usa el puerto 3001.
+ORCID rechaza localhost en su validador: abre también LiveSRL usando 127.0.0.1. Reinicia con `docker compose up -d`.
 El botón permanece desactivado y explica el motivo cuando faltan las credenciales.
 Nunca compartas valores secretos en incidencias ni commits.
 

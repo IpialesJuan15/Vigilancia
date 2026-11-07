@@ -78,7 +78,9 @@ test("registro, verificación real por correo, sesión y cierre", async ({
     page.getByLabel("Tu cuenta: Investigadora de prueba", { exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByText("La carga de artículos todavía no está disponible."),
+    page.getByText(
+      "Tu perfil permite consultar revisiones. Un administrador puede darte acceso como curador.",
+    ),
   ).toBeVisible();
   expect(
     await page.evaluate(

@@ -31,6 +31,7 @@ export async function api<T>(
       throw new Error("No se pudo conectar. Inténtalo de nuevo");
     token = (await response.json()).token;
   }
+  const multipart = body instanceof FormData;
   const response = await fetch(`/api${path}`, {
     method: method ?? (body === undefined ? "GET" : "POST"),
     credentials: "same-origin",
@@ -38,8 +39,12 @@ export async function api<T>(
     headers:
       body === undefined
         ? {}
-        : { "Content-Type": "application/json", "X-CSRF-Token": token },
-    body: body === undefined ? undefined : JSON.stringify(body),
+        : {
+            ...(multipart ? {} : { "Content-Type": "application/json" }),
+            "X-CSRF-Token": token,
+          },
+    body:
+      body === undefined ? undefined : multipart ? body : JSON.stringify(body),
   });
   const result = await response.json();
   if (!response.ok) {

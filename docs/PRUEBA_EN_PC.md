@@ -17,7 +17,7 @@ con tu cuenta de GitHub mediante su gestor de credenciales.
 
 Abre en tu navegador:
 
-- Aplicación: `http://localhost:3001`.
+- Aplicación: `http://127.0.0.1:3001`.
 - Buzón de pruebas: `http://localhost:8026`.
 
 Crea una cuenta con contraseña de 12+ caracteres. Abre el mensaje en el buzón de pruebas,

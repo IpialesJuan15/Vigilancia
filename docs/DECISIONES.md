@@ -83,3 +83,28 @@ La comprobación de tipos genera primero los tipos de Next.js para funcionar en 
 - Se rediseñan acceso y espacio privado sin métricas ficticias: estado de correo verificado,
   rol actual, un siguiente paso y aviso explícito de que la carga aún no está disponible.
   No se inicia F1 ni se añaden funciones científicas en este cambio.
+
+## F1 — Ingesta (pendiente de aceptación externa)
+
+JATS/XML de Europe PMC tiene prioridad. OpenAlex resuelve textos OA de otras áreas;
+OPENALEX_API_KEY permite credenciales propias cuando la fuente las requiere. Los proveedores
+pueden fallar sin inventar metadatos: el registro queda con un error visible y se puede reintentar.
+
+PDFs: GROBID obtiene secciones y referencias y PyMuPDF obtiene las tablas y páginas. Si GROBID
+no está disponible se conserva lectura por páginas con advertencia, sin afirmar referencias
+estructuradas completas. Docling se reserva para PDFs con tablas complejas que fallen la
+aceptación; no se instala un segundo conjunto de modelos sin evidencia de necesidad.
+
+Los archivos se guardan privados mediante ObjectStore (S3/MinIO o adaptador local explícito).
+MinIO se prepara desde código oficial porque las imágenes ensayadas no se pudieron descargar;
+la compilación S3 está pendiente del acceso de red, como indica VALIDACION_F1.md.
+Se usan dos tareas concurrentes y el build Go limita paralelismo a dos para controlar recursos.
+
+Estados de ingesta persistidos y progreso mediante consulta periódica cada dos segundos.
+La confirmación del método y su extracción con IA siguen en F2. No se agrega un botón que
+aparente extraer IA ni se publica información al catálogo durante F1.
+
+Las revisiones son privadas, con unicidad en BD por DOI y título normalizado; lectura,
+reintento, licencia y descarga verifican propietario. La carga exige curador/admin. El CLI
+operativo también acepta ORCID para cuentas sin correo. Las licencias desconocidas se bloquean;
+NC/ND requieren confirmación auditada y conservan advertencia de restricciones.

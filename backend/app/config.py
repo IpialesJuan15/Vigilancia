@@ -22,6 +22,17 @@ class Settings(BaseSettings):
     orcid_client_secret: str = ""
     orcid_redirect_uri: str = "http://localhost:3000/api/auth/orcid/callback"
 
+    storage_backend: str = "s3"
+    storage_dir: str = "/data/reviews"
+    s3_endpoint: str = "http://minio:9000"
+    s3_access_key: str = "livesrl-local"
+    s3_secret_key: str = "livesrl-local-only"
+    s3_bucket: str = "livesrl"
+    grobid_url: str = "http://grobid:8070"
+    openalex_api_key: str = ""
+    project_contact: str = "https://github.com/IpialesJuan15/Vigilancia"
+    max_pdf_bytes: int = 20 * 1024 * 1024
+
     @model_validator(mode="after")
     def secure_settings(self):
         if len(self.jwt_secret) < 32:
