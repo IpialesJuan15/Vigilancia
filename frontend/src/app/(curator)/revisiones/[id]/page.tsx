@@ -108,6 +108,20 @@ export default function DocumentPage() {
             habilitará en la siguiente etapa.
           </p>
         )}
+        {review.status === "parsed" && (
+          <Button
+            onClick={() => {
+              setTab("Tablas");
+              requestAnimationFrame(() =>
+                document
+                  .getElementById("document-panel")
+                  ?.scrollIntoView({ block: "start" }),
+              );
+            }}
+          >
+            Comprobar tablas
+          </Button>
+        )}
       </aside>
       {error && (
         <p role="alert" className="message error">
@@ -218,10 +232,31 @@ export default function DocumentPage() {
                     >
                       <table>
                         <thead>
-                          {table.header.map((row, j) => (
+                          {(
+                            table.header_cells ??
+                            table.header.map((row) =>
+                              row.map((value) => ({
+                                text: value,
+                                rowspan: "1",
+                                colspan: "1",
+                              })),
+                            )
+                          ).map((row, j) => (
                             <tr key={j}>
                               {row.map((c, k) => (
-                                <th key={k}>{c}</th>
+                                <th
+                                  key={k}
+                                  rowSpan={Math.min(
+                                    100,
+                                    Math.max(1, Number(c.rowspan) || 1),
+                                  )}
+                                  colSpan={Math.min(
+                                    100,
+                                    Math.max(1, Number(c.colspan) || 1),
+                                  )}
+                                >
+                                  {c.text}
+                                </th>
                               ))}
                             </tr>
                           ))}
@@ -249,6 +284,11 @@ export default function DocumentPage() {
                         </tbody>
                       </table>
                     </div>
+                    {table.footnotes?.map((note, j) => (
+                      <p className="help" key={j}>
+                        {note}
+                      </p>
+                    ))}
                   </article>
                 ))
               ) : (

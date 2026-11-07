@@ -1,0 +1,76 @@
+{
+  "checked_at": "2026-11-06T22:00:20.100876-05:00",
+  "scope": "Real DOI/PDF -> API -> Celery -> licensed full text -> JATS or GROBID/PyMuPDF -> MinIO",
+  "articles": [
+    {
+      "doi": "10.3390/ijms262412164",
+      "review_id": "5f3e07a9-b28e-42a4-8784-80c0816abf8a",
+      "title": "The Role of miRNAs in Parkinson's Disease: A Systematic Review.",
+      "license": "CC BY",
+      "source": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC12733558/fullTextXML",
+      "sha256": "b17cf174b7c74ebf7b6997423181e3df61f98c43d59db0cb0f72010d393ebaa4",
+      "format": "xml",
+      "parser": "jats-v2",
+      "verification_url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC12733558/fullTextXML",
+      "warnings": [],
+      "sections": 17,
+      "references": 103,
+      "tables": 2,
+      "rows": 88,
+      "sample_cell": "Salemi et al., 2022 (Italy) [14]"
+    },
+    {
+      "doi": "10.3389/fspor.2025.1694648",
+      "review_id": "02367e66-ad85-4c4f-a7bd-47783d85e83d",
+      "title": "Biomechanical analyses of the handstand: a systematic review.",
+      "license": "CC BY",
+      "source": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC12745452/fullTextXML",
+      "sha256": "e83d2e919b093c833ddbfcd7a3a5c7e73fad124294133279069d457ba49f8e1a",
+      "format": "xml",
+      "parser": "jats-v2",
+      "verification_url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC12745452/fullTextXML",
+      "warnings": [],
+      "sections": 15,
+      "references": 33,
+      "tables": 2,
+      "rows": 39,
+      "sample_cell": "1. Was the purpose stated clearly?"
+    },
+    {
+      "doi": "10.1016/j.fochx.2025.103378",
+      "review_id": "0d111183-5d1f-40ef-9f0b-c85e28a09530",
+      "title": "Reducing acrylamide in bread with plant additives: a systematic review.",
+      "license": "CC BY",
+      "source": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC12743532/fullTextXML",
+      "sha256": "a86a3f835f6681f043619ac49dc32074bb14f56ed9ef85662f1accdd0f7aa2f2",
+      "format": "xml",
+      "parser": "jats-v2",
+      "verification_url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC12743532/fullTextXML",
+      "warnings": [],
+      "sections": 19,
+      "references": 69,
+      "tables": 1,
+      "rows": 112,
+      "sample_cell": "China"
+    },
+    {
+      "doi": "10.1371/journal.pone.0337516",
+      "review_id": "14ae0854-12db-46a6-8c93-ca0d14edbdd7",
+      "title": "The epidemiology and management of chronic osteomyelitis in pediatrics - A systematic review.",
+      "license": "CC BY",
+      "source": null,
+      "sha256": "9840167f79b79e893d77d9eb42136c5f22141bb4ac565a9e90bfb0c0f44f8846",
+      "format": "pdf",
+      "parser": "grobid+pymupdf-v1",
+      "verification_url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC12671803/fullTextXML",
+      "warnings": [
+        "La estructura del PDF requiere revisión manual"
+      ],
+      "sections": 13,
+      "references": 60,
+      "tables": 11,
+      "rows": 147,
+      "sample_cell": "Score"
+    }
+  ]
+}

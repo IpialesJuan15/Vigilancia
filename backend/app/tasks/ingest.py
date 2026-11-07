@@ -2,7 +2,6 @@ import hashlib
 import logging
 import re
 
-from defusedxml import ElementTree as ET
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
@@ -11,10 +10,10 @@ from app.models import AuditLog, LivingReview
 from app.services.documents import (
     IngestionError,
     enrich_pdf,
+    jats_license,
     license_policy,
     parse_jats,
     parse_pdf,
-    text,
 )
 from app.services.storage import ObjectStore
 from app.sources.ingestion import fetch, resolve
@@ -58,14 +57,7 @@ def ingest_review(review_id: str):
             license_value = metadata.get("license")
             if metadata["format"] == "xml":
                 xml_data = data if fmt == "xml" else fetch(metadata["url"])
-                root = ET.fromstring(xml_data)
-                for element in root.findall(".//permissions/license"):
-                    href = element.get("{http://www.w3.org/1999/xlink}href")
-                    if href:
-                        license_value = href
-                        break
-                    if not license_value:
-                        license_value = text(element)
+                license_value = jats_license(xml_data) or license_value
             license_name, restricted = license_policy(license_value)
             review.license = license_name
             if restricted and not review.license_confirmed:
@@ -104,7 +96,10 @@ def ingest_review(review_id: str):
             document = parse_jats(data) if fmt == "xml" else enrich_pdf(data, parse_pdf(data))
             document["provenance"] = {
                 "doi": review.original_doi,
-                "url": metadata["url"],
+                "url": None if review.uploaded_key else metadata["url"],
+                "verification_url": metadata["url"],
+                "origin": "uploaded_pdf" if review.uploaded_key else "download",
+                "format": fmt,
                 "license": license_name,
                 "sha256": review.source_sha256,
                 "provider": metadata["provider"],

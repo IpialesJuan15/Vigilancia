@@ -352,3 +352,84 @@ def test_streamed_body_limit_cannot_be_bypassed(client):
         headers={"Content-Length": "0"},
     )
     assert response.status_code == 413
+
+
+def test_jats_publisher_license_locations_and_merged_headers():
+    from app.services.documents import jats_license
+
+    for fragment in [
+        (
+            '<license><license-p><ext-link xmlns:xlink="http://www.w3.org/1999/xlink" '
+            'xlink:href="https://creativecommons.org/licenses/by/4.0/">'
+            "CC BY</ext-link></license-p></license>"
+        ),
+        '<license><license_ref xmlns="http://www.niso.org/schemas/ali/1.0/">https://creativecommons.org/licenses/by/4.0/</license_ref></license>',
+    ]:
+        xml = (
+            "<article><front><permissions>" + fragment + "</permissions></front></article>"
+        ).encode()
+        assert license_policy(jats_license(xml)) == ("CC BY", False)
+    xml = JATS.replace(b"<th>Study</th>", b'<th colspan="2">Study</th>')
+    assert parse_jats(xml)["tables"][0]["header_cells"][0][0]["colspan"] == "2"
+    assert (
+        jats_license(
+            b"<article><permissions><license>All rights reserved</license></permissions></article>"
+        )
+        == "All rights reserved"
+    )
+
+
+@pytest.mark.parametrize(
+    "status,retry_after,expected", [(503, "1", 2), (429, "120", 1), (403, "1", 1)]
+)
+def test_source_retries_only_transient_errors_and_honors_limits(
+    monkeypatch, status, retry_after, expected
+):
+    from app.sources.ingestion import fetch
+
+    monkeypatch.setattr("app.sources.ingestion.public_url", lambda url: None)
+    waits = []
+    monkeypatch.setattr("app.sources.ingestion.time.sleep", lambda seconds: waits.append(seconds))
+    attempts = []
+
+    class Client:
+        def __init__(self, **kw):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            pass
+
+        @contextmanager
+        def stream(self, method, url):
+            attempts.append(url)
+            yield httpx.Response(
+                status if len(attempts) == 1 else 200,
+                content=b"source",
+                headers={"Retry-After": retry_after},
+                request=httpx.Request(method, url),
+            )
+
+    monkeypatch.setattr("app.sources.ingestion.httpx.Client", Client)
+    if expected == 2:
+        assert fetch("https://example.org/document") == b"source"
+        assert waits == [1]
+    else:
+        with pytest.raises(httpx.HTTPStatusError):
+            fetch("https://example.org/document")
+        assert waits == []
+    assert len(attempts) == expected
+
+
+def test_block_boundaries_are_readable_without_changing_inline_names():
+    from defusedxml import ElementTree as ET
+
+    from app.services.documents import text
+
+    assert (
+        text(ET.fromstring("<td><p>Case-control</p><p>PD patients</p></td>"))
+        == "Case-control PD patients"
+    )
+    assert text(ET.fromstring("<p>miR<sub>21</sub>-5p</p>")) == "miR21-5p"

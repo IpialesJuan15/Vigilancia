@@ -23,10 +23,18 @@ services:
     build:
       context: ./backend
       secrets: [ca_bundle]
+    volumes:
+      - ${SSL_CERT_FILE:-/etc/ssl/certs/ca-certificates.crt}:/run/cloud-ca.pem:ro
+    environment:
+      SSL_CERT_FILE: /run/cloud-ca.pem
   beat:
     build:
       context: ./backend
       secrets: [ca_bundle]
+    volumes:
+      - ${SSL_CERT_FILE:-/etc/ssl/certs/ca-certificates.crt}:/run/cloud-ca.pem:ro
+    environment:
+      SSL_CERT_FILE: /run/cloud-ca.pem
   frontend:
     build:
       context: ./frontend

@@ -1,4 +1,4 @@
-name: Calidad F0
+name: Calidad LiveSRL
 on: [push, pull_request]
 permissions:
   contents: read

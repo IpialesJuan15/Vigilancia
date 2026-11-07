@@ -27,3 +27,20 @@ En cada POST/PATCH se requiere `Origin` igual a APP_BASE_URL, cookie CSRF y cabe
 `X-CSRF-Token` con el valor devuelto por GET /auth/csrf. El cliente de frontend ya lo hace.
 Los errores usan `{code, message, details}` sin incluir contraseñas, tokens ni trazas.
 Las contraseñas nuevas requieren 12–128 caracteres. No hay endpoints de publicación ni DOI en F0.
+
+## F1 — Revisiones privadas
+
+Todas las escrituras mantienen la comprobación de sesión, origen y token CSRF.
+
+| Método | Ruta sin /api | Acceso y comportamiento |
+|---|---|---|
+| GET | /reviews | Propias del usuario; informa si su rol permite cargar |
+| POST | /reviews | Curador/admin; formulario doi y PDF opcional de hasta 20 MB; encola lectura |
+| GET | /reviews/{id} | Propietario; estado, progreso y documento estructurado |
+| POST | /reviews/{id}/retry | Propietario curador/admin; reintenta un registro fallido |
+| POST | /reviews/{id}/confirm-license | Propietario curador/admin; confirma condiciones restrictivas con auditoría |
+| GET | /reviews/{id}/source | Propietario; descarga autenticada del original privado |
+
+Se conservan ubicaciones, spans de celdas, encabezados y notas. Las referencias incluyen texto
+fuente y representación legible. El documento registra parser, origen (descarga/PDF subido),
+URL de verificación de licencia y digest del archivo. No se publica una versión científica en F1.

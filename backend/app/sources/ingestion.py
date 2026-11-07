@@ -1,13 +1,19 @@
 """OA source resolution; no paywall bypass or invented metadata."""
 
 import ipaddress
+import logging
 import socket
+import time
+from datetime import UTC, datetime
+from email.utils import parsedate_to_datetime
 from urllib.parse import quote, urljoin, urlsplit
 
 import httpx
 
 from app.config import get_settings
 from app.services.documents import IngestionError
+
+logging.getLogger("httpx").setLevel(logging.WARNING)
 
 
 def public_url(url: str):
@@ -26,10 +32,31 @@ def public_url(url: str):
         addresses = socket.getaddrinfo(parsed.hostname, 443, type=socket.SOCK_STREAM)
         if not addresses or any(not ipaddress.ip_address(a[4][0]).is_global for a in addresses):
             raise ValueError()
-    except (OSError, ValueError):
+    except OSError:
+        raise IngestionError(
+            "source_dns_unavailable", "No pudimos resolver la dirección de la fuente"
+        ) from None
+    except ValueError:
         raise IngestionError(
             "unsafe_url", "No pudimos comprobar la dirección de la fuente"
         ) from None
+
+
+def retry_delay(response: httpx.Response | None, attempt: int) -> float | None:
+    delay = float(2**attempt)
+    value = response.headers.get("Retry-After") if response is not None else None
+    if value:
+        try:
+            requested = float(value)
+        except ValueError:
+            try:
+                requested = (parsedate_to_datetime(value) - datetime.now(UTC)).total_seconds()
+            except (ValueError, TypeError):
+                requested = delay
+        if requested > 30:
+            return None  # Do not retry earlier than the source permits or tie up a worker.
+        delay = max(delay, requested)
+    return delay
 
 
 def fetch(url: str, *, maximum: int | None = None) -> bytes:
@@ -38,22 +65,41 @@ def fetch(url: str, *, maximum: int | None = None) -> bytes:
     with httpx.Client(
         timeout=httpx.Timeout(60, connect=15), headers=headers, follow_redirects=False
     ) as client:
-        for _ in range(5):
-            public_url(url)
-            with client.stream("GET", url) as response:
-                if response.is_redirect:
-                    url = urljoin(url, response.headers["location"])
-                    continue
-                response.raise_for_status()
-                body = bytearray()
-                for chunk in response.iter_bytes():
-                    body.extend(chunk)
-                    if len(body) > maximum:
-                        raise IngestionError(
-                            "document_too_large", "El documento supera los 20 MB permitidos"
-                        )
-                return bytes(body)
-    raise IngestionError("redirect_limit", "La fuente devolvió demasiadas redirecciones")
+        for attempt in range(3):
+            try:
+                target = url
+                for _ in range(5):
+                    public_url(target)
+                    with client.stream("GET", target) as response:
+                        if response.is_redirect:
+                            target = urljoin(target, response.headers["location"])
+                            continue
+                        response.raise_for_status()
+                        body = bytearray()
+                        for chunk in response.iter_bytes():
+                            body.extend(chunk)
+                            if len(body) > maximum:
+                                raise IngestionError(
+                                    "document_too_large", "El documento supera los 20 MB permitidos"
+                                )
+                        return bytes(body)
+                raise IngestionError(
+                    "redirect_limit", "La fuente devolvió demasiadas redirecciones"
+                )
+            except httpx.HTTPStatusError as exc:
+                if exc.response.status_code not in {408, 429, 500, 502, 503, 504} or attempt == 2:
+                    raise
+                delay = retry_delay(exc.response, attempt)
+                if delay is None:
+                    raise
+            except (httpx.TransportError, IngestionError) as exc:
+                if isinstance(exc, IngestionError) and exc.code != "source_dns_unavailable":
+                    raise
+                if attempt == 2:
+                    raise
+                delay = retry_delay(None, attempt)
+            time.sleep(delay or 0)
+    raise IngestionError("source_unavailable", "No pudimos completar la descarga")
 
 
 def json_get(url: str) -> dict:

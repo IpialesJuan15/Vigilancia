@@ -20,7 +20,19 @@ def normalize_doi(value: str) -> str:
 
 
 def text(element) -> str:
-    return " ".join("".join(element.itertext()).split()) if element is not None else ""
+    if element is None:
+        return ""
+
+    def rendered(node):
+        result = node.text or ""
+        for child in node:
+            result += rendered(child)
+            if child.tag.split("}")[-1] in {"p", "list-item", "break", "br", "disp-formula"}:
+                result += " "
+            result += child.tail or ""
+        return result
+
+    return " ".join(rendered(element).split())
 
 
 def license_policy(value: str | None) -> tuple[str, bool]:
@@ -44,6 +56,19 @@ def license_policy(value: str | None) -> tuple[str, bool]:
         "No pudimos comprobar una licencia compatible. "
         "No se procesará el texto sin verificar sus permisos de uso",
     )
+
+
+def jats_license(data: bytes) -> str | None:
+    root = ET.fromstring(data)
+    for license_node in root.findall(".//permissions/license"):
+        for node in license_node.iter():
+            href = node.get("{http://www.w3.org/1999/xlink}href")
+            candidate = href or (text(node) if node.tag.split("}")[-1] == "license_ref" else None)
+            if candidate and "creativecommons.org/" in candidate:
+                return candidate.strip()
+        if text(license_node):
+            return text(license_node)
+    return None
 
 
 def parse_jats(data: bytes) -> dict:
@@ -107,15 +132,33 @@ def parse_jats(data: bytes) -> dict:
                 "location": f"Tabla {i}",
                 "page": None,
                 "header": header,
+                "header_cells": [
+                    [
+                        {
+                            "text": text(c),
+                            "rowspan": c.get("rowspan", "1"),
+                            "colspan": c.get("colspan", "1"),
+                        }
+                        for c in row
+                    ]
+                    for row in table.findall(".//thead/tr")
+                ],
+                "footnotes": [text(n) for n in table.findall(".//table-wrap-foot")],
                 "rows": rows,
                 "needs_review": any(
                     c["rowspan"] != "1" or c["colspan"] != "1" for row in rows for c in row
+                )
+                or any(
+                    c.get("rowspan", "1") != "1" or c.get("colspan", "1") != "1"
+                    for row in table.findall(".//thead/tr")
+                    for c in row
                 ),
             }
         )
     references = [
         {
-            "text": text(ref),
+            "text": " ".join(" ".join(ref.itertext()).split()),
+            "source_text": text(ref),
             "location": f"Referencia {i}",
             "doi": next(
                 (text(x) for x in ref.findall(".//pub-id") if x.get("pub-id-type") == "doi"), None
@@ -124,7 +167,7 @@ def parse_jats(data: bytes) -> dict:
         for i, ref in enumerate(root.findall(".//ref-list/ref"), 1)
     ]
     return {
-        "parser": "jats-v1",
+        "parser": "jats-v2",
         "sections": sections,
         "tables": tables,
         "references": references,

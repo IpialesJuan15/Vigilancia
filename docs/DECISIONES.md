@@ -84,7 +84,7 @@ La comprobación de tipos genera primero los tipos de Next.js para funcionar en 
   rol actual, un siguiente paso y aviso explícito de que la carga aún no está disponible.
   No se inicia F1 ni se añaden funciones científicas en este cambio.
 
-## F1 — Ingesta (pendiente de aceptación externa)
+## F1 — Ingesta (validación técnica completada)
 
 JATS/XML de Europe PMC tiene prioridad. OpenAlex resuelve textos OA de otras áreas;
 OPENALEX_API_KEY permite credenciales propias cuando la fuente las requiere. Los proveedores
@@ -97,7 +97,7 @@ aceptación; no se instala un segundo conjunto de modelos sin evidencia de neces
 
 Los archivos se guardan privados mediante ObjectStore (S3/MinIO o adaptador local explícito).
 MinIO se prepara desde código oficial porque las imágenes ensayadas no se pudieron descargar;
-la compilación S3 está pendiente del acceso de red, como indica VALIDACION_F1.md.
+la compilación y las operaciones S3 se verificaron tras la publicación del entorno por el usuario.
 Se usan dos tareas concurrentes y el build Go limita paralelismo a dos para controlar recursos.
 
 Estados de ingesta persistidos y progreso mediante consulta periódica cada dos segundos.
@@ -108,3 +108,17 @@ Las revisiones son privadas, con unicidad en BD por DOI y título normalizado; l
 reintento, licencia y descarga verifican propietario. La carga exige curador/admin. El CLI
 operativo también acepta ORCID para cuentas sin correo. Las licencias desconocidas se bloquean;
 NC/ND requieren confirmación auditada y conservan advertencia de restricciones.
+
+### Resultado sobre fuentes reales
+
+Se validaron tres JATS reales y un PDF adicional por el recorrido HTTP/Celery/S3, conservando
+los originales y su hash. Los bloques de párrafos mantienen separaciones de lectura; las
+etiquetas inline no introducen espacios en nombres como miR21-5p. Las referencias conservan
+su texto fuente y una representación legible. Las tablas guardan encabezados combinados y notas.
+El parser JATS se identifica como jats-v2 para reproducibilidad.
+
+Los certificados del proxy se montan también en el worker y Beat. El adaptador S3 fue probado
+con MinIO real. Para PDF cargado se distingue la fuente subida de la URL de verificación de
+licencia, evitando atribuir a la URL del XML los bytes del PDF. Se agregan reintentos limitados
+ante 503/429/transporte y se respeta Retry-After sin reducir verificaciones de URL o TLS.
+La vista privada ofrece Comprobar tablas como siguiente acción; F2 no se habilita anticipadamente.

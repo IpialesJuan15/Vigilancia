@@ -3,12 +3,11 @@
 Plataforma web de revisiones sistemáticas de literatura vivas, en español y en modo prueba.
 Implementación por fases del [plan maestro](docs/PLAN_MAESTRO.md).
 
-**Estado: F0 validada por el usuario; F1 en desarrollo.** La rama de F1 añade carga privada
-por DOI/PDF, verificación OA/licencia y lectura del documento. La aceptación de F1 está
-pendiente de MinIO y tres revisiones reales por restricciones de red del entorno remoto.
-Consulta [Validación de F1](docs/VALIDACION_F1.md) antes de actualizar una instalación.
-La extracción científica con IA, vigilancia y publicación se implementan en fases posteriores.
-No hay artículos ni resultados de ejemplo en la aplicación.
+**Estado: F1 implementada y validada.** Carga privada por DOI/PDF, verificación OA/licencia,
+lectura de secciones, referencias y tablas, originales privados en MinIO y acceso por curador.
+Se probaron tres revisiones reales por DOI y una adicional por PDF; ver [evidencia F1](docs/VALIDACION_F1.md).
+La extracción con IA corresponde a F2; vigilancia y publicación se implementan en fases posteriores.
+No se crean artículos de ejemplo al arrancar la aplicación.
 
 Para probar en Windows sin ocupar el puerto 3000 de otro proyecto, sigue
 [Probar en tu PC](docs/PRUEBA_EN_PC.md).

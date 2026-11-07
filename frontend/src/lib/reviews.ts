@@ -9,6 +9,8 @@ export type ParsedDocument = {
     caption: string;
     location: string;
     header: string[][];
+    header_cells?: Cell[][];
+    footnotes?: string[];
     rows: Cell[][];
     needs_review: boolean;
   }[];
